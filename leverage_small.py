@@ -232,23 +232,23 @@ def plot_simulation_results(results):
     if results["liquidation_days"]:
         axes[0, 1].hist(results["liquidation_days"], bins=30, alpha=0.7, color='red')
         axes[0, 1].axvline(results["avg_days_to_liquidation"], color='blue', linestyle='--', 
-                          label=f'Average: {results["avg_days_to_liquidation"]:.1f} days')
-        axes[0, 1].set_title("Days to Liquidation")
-        axes[0, 1].set_xlabel("Days")
-        axes[0, 1].set_ylabel("Frequency")
+                          label=f'Média: {results["avg_days_to_liquidation"]:.1f} dias')
+        axes[0, 1].set_title("Dias até a Liquidação")
+        axes[0, 1].set_xlabel("Dias")
+        axes[0, 1].set_ylabel("Frequência")
         axes[0, 1].legend()
     else:
-        axes[0, 1].text(0.5, 0.5, "No liquidations occurred", 
+        axes[0, 1].text(0.5, 0.5, "Nenhuma liquidação ocorreu", 
                        horizontalalignment='center', verticalalignment='center')
-        axes[0, 1].set_title("Days to Liquidation")
+        axes[0, 1].set_title("Dias até a Liquidação")
     
     # Plot 3: Survival rate pie chart
     survival_rate = 100 - results["liquidation_rate"]
     axes[1, 0].pie([results["liquidation_rate"], survival_rate], 
-                  labels=[f'Liquidated ({results["liquidation_rate"]:.1f}%)', 
-                          f'Survived ({survival_rate:.1f}%)'],
+                  labels=[f'Liquidado ({results["liquidation_rate"]:.1f}%)', 
+                          f'Sobreviveu ({survival_rate:.1f}%)'],
                   colors=['red', 'green'], autopct='%1.1f%%', startangle=90)
-    axes[1, 0].set_title("Liquidation vs. Survival Rate")
+    axes[1, 0].set_title("Taxa de Liquidação vs. Sobrevivência")
     
     # Plot 4: Comparative leverage box plot
     leverage_data = []

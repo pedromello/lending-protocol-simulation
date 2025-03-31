@@ -146,16 +146,18 @@ def run_monte_carlo_simulation(
     liquidated_max_leverages = []
     price_path = []
     
+        # Generate price path
+    price_path = simulate_price_path(
+        initial_price=initial_price,
+        drift=drift,
+        volatility=volatility,
+        days=simulation_days,
+        dt=dt
+    )
+    
     # Run simulations
     for _ in tqdm(range(num_simulations), desc="Running simulations"):
-        # Generate price path
-        price_path = simulate_price_path(
-            initial_price=initial_price,
-            drift=drift,
-            volatility=volatility,
-            days=simulation_days,
-            dt=dt
-        )
+
         
         # Simulate leveraged position
         days_to_liquidation, max_leverage, health_factors, leverage_history = simulate_leveraged_position(
@@ -217,69 +219,69 @@ def plot_simulation_results(results):
     
     axes[0, 0].plot(unique_leverages, avg_returns, 'b-', linewidth=2)
     axes[0, 0].axhline(y=0, color='r', linestyle='--', alpha=0.5)
-    axes[0, 0].set_title("Leverage vs. Expected Returns")
-    axes[0, 0].set_xlabel("Leverage Multiplier")
-    axes[0, 0].set_ylabel("Average Return")
+    axes[0, 0].set_title("Alavancagem vs. Retornos Esperados")
+    axes[0, 0].set_xlabel("Multiplicador de Alavancagem")
+    axes[0, 0].set_ylabel("Retorno Médio")
     
     # Find and mark the optimal leverage point
     optimal_leverage = unique_leverages[np.argmax(avg_returns)]
     max_return = max(avg_returns)
     axes[0, 0].plot(optimal_leverage, max_return, 'ro', 
-                    label=f'Optimal: {optimal_leverage:.1f}x')
+                    label=f'Ótimo: {optimal_leverage:.1f}x')
     axes[0, 0].legend()
     
-    # Plot 2: Distribution of days to liquidation (for liquidated positions)
+    # Plot 2: Distribution of days to liquidation
     if results["liquidation_days"]:
         axes[0, 1].hist(results["liquidation_days"], bins=30, alpha=0.7, color='red')
         axes[0, 1].axvline(results["avg_days_to_liquidation"], color='blue', linestyle='--', 
-                          label=f'Average: {results["avg_days_to_liquidation"]:.1f} days')
-        axes[0, 1].set_title("Days to Liquidation")
-        axes[0, 1].set_xlabel("Days")
-        axes[0, 1].set_ylabel("Frequency")
+                          label=f'Média: {results["avg_days_to_liquidation"]:.1f} dias')
+        axes[0, 1].set_title("Dias até Liquidação")
+        axes[0, 1].set_xlabel("Dias")
+        axes[0, 1].set_ylabel("Frequência")
         axes[0, 1].legend()
     else:
-        axes[0, 1].text(0.5, 0.5, "No liquidations occurred", 
+        axes[0, 1].text(0.5, 0.5, "Nenhuma liquidação ocorreu", 
                        horizontalalignment='center', verticalalignment='center')
-        axes[0, 1].set_title("Days to Liquidation")
+        axes[0, 1].set_title("Dias até Liquidação")
     
     # Plot 3: Survival rate pie chart
     survival_rate = 100 - results["liquidation_rate"]
     axes[1, 0].pie([results["liquidation_rate"], survival_rate], 
-                  labels=[f'Liquidated ({results["liquidation_rate"]:.1f}%)', 
-                          f'Survived ({survival_rate:.1f}%)'],
+                  labels=[f'Liquidado ({results["liquidation_rate"]:.1f}%)', 
+                          f'Sobreviveu ({survival_rate:.1f}%)'],
                   colors=['red', 'green'], autopct='%1.1f%%', startangle=90)
-    axes[1, 0].set_title("Liquidation vs. Survival Rate")
+    axes[1, 0].set_title("Taxa de Liquidação vs. Sobrevivência")
     
     # Plot 4: Comparative leverage box plot
     leverage_data = []
     labels = []
     
     leverage_data.append(results["max_leverages"])
-    labels.append("All Positions")
+    labels.append("Todas Posições")
     
     if results.get("avg_survived_leverage") is not None:
         survived_max_leverages = [lev for i, lev in enumerate(results["max_leverages"]) 
-                                 if i not in [results["liquidation_days"].index(day) 
+                                 if i in [results["liquidation_days"].index(day) 
                                              for day in results["liquidation_days"]]]
         leverage_data.append(survived_max_leverages)
-        labels.append("Survived Positions")
+        labels.append("Posições Sobreviventes")
     
     if results.get("avg_liquidated_leverage") is not None:
         liquidated_max_leverages = [lev for i, lev in enumerate(results["max_leverages"]) 
-                                   if i in [results["liquidation_days"].index(day) 
+                                   if i not in [results["liquidation_days"].index(day) 
                                            for day in results["liquidation_days"]]]
         leverage_data.append(liquidated_max_leverages)
-        labels.append("Liquidated Positions")
+        labels.append("Posições Liquidadas")
     
     axes[1, 1].boxplot(leverage_data, labels=labels)
-    axes[1, 1].set_title("Leverage Comparison")
-    axes[1, 1].set_ylabel("Leverage")
+    axes[1, 1].set_title("Comparação de Alavancagem")
+    axes[1, 1].set_ylabel("Alavancagem")
     
     # Plot 5: Price path example
     axes[2, 0].plot(results["price_path"], color='blue')
-    axes[2, 0].set_title("Simulated Price Path")
-    axes[2, 0].set_xlabel("Days")
-    axes[2, 0].set_ylabel("Price ($)")
+    axes[2, 0].set_title("Caminho de Preço Simulado")
+    axes[2, 0].set_xlabel("Dias")
+    axes[2, 0].set_ylabel("Preço ($)")
     
     plt.tight_layout()
     return fig
@@ -292,7 +294,7 @@ if __name__ == "__main__":
         "initial_deposit": 1.0,         # 1 ETH
         "initial_price": 3000,          # $3000 per ETH
         "drift": 0.05,                  # 5% annual return
-        "volatility": 0.25,             # 80% annual volatility (crypto is volatile!)
+        "volatility": 0.30,             # 80% annual volatility (crypto is volatile!)
         "ltv_ratio": 0.80,              # 80% LTV
         "liquidation_threshold": 0.85,  # 85% liquidation threshold
         "safety_margin": 0.1,           # 10% safety buffer
