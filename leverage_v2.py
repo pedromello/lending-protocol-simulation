@@ -1,10 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import json
 
 def simulate_price_path(initial_price, drift, volatility, days, dt=1/365):
     """
-    Simulate asset price using Geometric Brownian Motion
+    Simulate asset price using Geometric Brownian Motion (GBM).
     
     Parameters:
     - initial_price: Starting price of the asset
@@ -20,25 +21,25 @@ def simulate_price_path(initial_price, drift, volatility, days, dt=1/365):
     prices = np.zeros(steps + 1)
     prices[0] = initial_price
     
-    # Generate random shocks
-    Z = np.random.normal(0, 1, steps)
+    # Initialize random number generator with seed for reproducibility
+    rng = np.random.default_rng()
     
-    # Simulate price path
+    # Generate random shocks
+    Z = rng.normal(0, 1, steps)
+    
+    # Simulate price path using Geometric Brownian Motion with daily-adjusted volatility
+    daily_volatility = volatility / np.sqrt(365)
+    daily_drift = drift / 365
     for t in range(1, steps + 1):
-        prices[t] = prices[t-1] * np.exp((drift - 0.5 * volatility**2) * dt + volatility * np.sqrt(dt) * Z[t-1])
+        prices[t] = prices[t-1] * np.exp((daily_drift - 0.5 * daily_volatility**2) * dt + daily_volatility * np.sqrt(dt) * Z[t-1])
     
     return prices
 
-def calculate_max_leverage(
+def get_random_leverage(
     initial_deposit,
-    ltv_ratio, 
-    liquidation_threshold,
-    safety_margin,
-    max_iterations=100
 ):
     """
-    Calculate the maximum leverage possible given LTV and liquidation threshold
-    with a safety margin using a geometric series approach
+    get a random leverage
     
     Parameters:
     - initial_deposit: Initial collateral amount
@@ -52,19 +53,21 @@ def calculate_max_leverage(
     - total_borrowed: Final borrowed value
     - leverage: Final leverage ratio
     """
-    # Generate random leverage between 1 and 5
-    leverage = np.random.uniform(1, 5)
+    # Generate random leverage between 0.1 and 0.8
+    ltv_ratio = np.random.uniform(0.1, 0.8)
+    
+    # Geometric Series infinite sum for leverage calculation
+    leverage = 1 / (1 - ltv_ratio)
     
     # Calculate total collateral and borrowed amount based on random leverage
     total_collateral = initial_deposit * leverage
-    total_borrowed = total_collateral - initial_deposit
+    total_borrowed = total_collateral * ltv_ratio
     
-    return total_collateral, total_borrowed, leverage
+    return total_collateral, total_borrowed, leverage, ltv_ratio
 
 def simulate_leveraged_position(
     initial_deposit,
     price_path,
-    ltv_ratio,
     liquidation_threshold,
     safety_margin=0.1
 ):
@@ -87,28 +90,33 @@ def simulate_leveraged_position(
     initial_price = price_path[0]
     
     # Calculate maximum leverage at the beginning
-    total_collateral, total_borrowed, max_leverage = calculate_max_leverage(
+    total_collateral, total_borrowed, max_leverage, ltv_ratio = get_random_leverage(
         initial_deposit,
-        ltv_ratio,
-        liquidation_threshold,
-        safety_margin
     )
     
     # Convert collateral to ETH units
-    collateral_eth = total_collateral / initial_price
+    collateral_eth = total_collateral
     
     # Tracking variables
     days_to_liquidation = None
     health_factor_history = []
     leverage_history = []
 
+    total_borrowed_value = total_borrowed * initial_price
     # Simulate each day
     for day, price in enumerate(price_path):
         # Update collateral value
         collateral_value = collateral_eth * price
         
-        # Calculate health factor
-        health_factor = (collateral_value) / (total_borrowed * liquidation_threshold) if total_borrowed > 0 else float('inf')
+        
+        health_factor = 0.0
+        if total_borrowed > 0:
+            # Calculate health factor
+            health_factor = collateral_value * liquidation_threshold / total_borrowed_value
+        else:
+            health_factor = float('inf')
+        
+        
         
         # Record history
         health_factor_history.append(health_factor)
@@ -119,7 +127,7 @@ def simulate_leveraged_position(
             days_to_liquidation = day
             break
     
-    return days_to_liquidation, max_leverage, health_factor_history, leverage_history
+    return days_to_liquidation, max_leverage, health_factor_history, leverage_history, ltv_ratio
 
 def run_monte_carlo_simulation(
     num_simulations=1000,
@@ -127,7 +135,6 @@ def run_monte_carlo_simulation(
     initial_price=3000,   # $3000 per ETH
     drift=0.05,           # 5% annual return
     volatility=0.80,      # 80% annual volatility
-    ltv_ratio=0.80,       # 80% LTV
     liquidation_threshold=0.85,  # 85% liquidation threshold
     safety_margin=0.1,    # 10% safety buffer
     simulation_days=365,  # 1 year simulation
@@ -155,18 +162,26 @@ def run_monte_carlo_simulation(
         dt=dt
     )
     
+    borrowers = []
+    
     # Run simulations
     for _ in tqdm(range(num_simulations), desc="Running simulations"):
 
         
         # Simulate leveraged position
-        days_to_liquidation, max_leverage, health_factors, leverage_history = simulate_leveraged_position(
+        days_to_liquidation, max_leverage, health_factors, leverage_history, ltv_ratio = simulate_leveraged_position(
             initial_deposit=initial_deposit,
             price_path=price_path,
-            ltv_ratio=ltv_ratio,
             liquidation_threshold=liquidation_threshold,
             safety_margin=safety_margin
         )
+        
+        borrowers.append({
+            "days_to_liquidation": days_to_liquidation,
+            "max_leverage": max_leverage,
+            "health_factors": health_factors,
+            "ltv_ratio": ltv_ratio,
+        })
         
         # Record results
         max_leverages.append(max_leverage)
@@ -189,7 +204,8 @@ def run_monte_carlo_simulation(
         "avg_liquidated_leverage": np.mean(liquidated_max_leverages) if liquidated_max_leverages else None,
         "max_leverages": max_leverages,
         "liquidation_days": liquidation_days,
-        "price_path": price_path
+        "price_path": price_path,
+        "borrowers": borrowers,
     }
     
     return results
@@ -260,16 +276,19 @@ def plot_simulation_results(results):
     labels.append("Todas Posições")
     
     if results.get("avg_survived_leverage") is not None:
-        survived_max_leverages = [lev for i, lev in enumerate(results["max_leverages"]) 
-                                 if i in [results["liquidation_days"].index(day) 
-                                             for day in results["liquidation_days"]]]
+        survived_max_leverages = []
+        for obj in results['borrowers']:
+            if obj.get("days_to_liquidation") is None:
+                survived_max_leverages.append(obj["max_leverage"])
+        
         leverage_data.append(survived_max_leverages)
         labels.append("Posições Sobreviventes")
     
     if results.get("avg_liquidated_leverage") is not None:
-        liquidated_max_leverages = [lev for i, lev in enumerate(results["max_leverages"]) 
-                                   if i not in [results["liquidation_days"].index(day) 
-                                           for day in results["liquidation_days"]]]
+        liquidated_max_leverages = []
+        for obj in results['borrowers']:
+            if obj.get("days_to_liquidation") is not None:
+                liquidated_max_leverages.append(obj["max_leverage"])
         leverage_data.append(liquidated_max_leverages)
         labels.append("Posições Liquidadas")
     
@@ -294,8 +313,7 @@ if __name__ == "__main__":
         "initial_deposit": 1.0,         # 1 ETH
         "initial_price": 3000,          # $3000 per ETH
         "drift": 0.05,                  # 5% annual return
-        "volatility": 0.30,             # 80% annual volatility (crypto is volatile!)
-        "ltv_ratio": 0.80,              # 80% LTV
+        "volatility": 0.35,             # 80% annual volatility (crypto is volatile!)
         "liquidation_threshold": 0.85,  # 85% liquidation threshold
         "safety_margin": 0.1,           # 10% safety buffer
         "simulation_days": 365,         # 1 year simulation
@@ -321,30 +339,12 @@ if __name__ == "__main__":
     
     if results['avg_liquidated_leverage'] is not None:
         print(f"Average leverage (liquidated positions): {results['avg_liquidated_leverage']:.2f}x")
+        
+    # save results['borrowers'] to a json file
+    with open('borrowers.json', 'w') as f:
+        json.dump(results['borrowers'], f, indent=4)
+    
     
     # Plot the results
     fig = plot_simulation_results(results)
     plt.show()
-    
-    # Sensitivity Analysis - Safety Margin
-    print("\n=== Safety Margin Sensitivity Analysis ===")
-    safety_margins = [0.05, 0.1, 0.15, 0.2, 0.25]
-    margin_results = []
-    
-    for margin in safety_margins:
-        params["safety_margin"] = margin
-        params["num_simulations"] = 200  # Reduce for sensitivity analysis
-        
-        print(f"Testing safety margin: {margin:.2f}")
-        result = run_monte_carlo_simulation(**params)
-        margin_results.append({
-            "safety_margin": margin,
-            "avg_max_leverage": result["avg_max_leverage"],
-            "liquidation_rate": result["liquidation_rate"]
-        })
-        
-    # Print sensitivity results
-    print("\nSafety Margin | Avg Max Leverage | Liquidation Rate")
-    print("-" * 50)
-    for res in margin_results:
-        print(f"{res['safety_margin']:.2f}        | {res['avg_max_leverage']:.2f}x           | {res['liquidation_rate']:.2f}%")
