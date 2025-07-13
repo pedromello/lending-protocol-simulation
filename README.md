@@ -6,10 +6,16 @@ A Monte Carlo simulation designed to study and determine optimal Loan-to-Value (
 
 The core simulation logic is implemented in `leverage_v2.py`
 
+If you're interested on the new version of the simulation, use the `leverage_tcc.py`
+
 ## Running the Simulation
 
 To execute the simulation, run:
 
 ```bash
 python leverage_v2.py
+```
+
+```bash
+python leverage_tcc.py
 ```
