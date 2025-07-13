@@ -1,0 +1,118 @@
+{
+    "Total": {
+        "0": {
+            "expected_roi": 0.07027588626439837,
+            "first_liquidation_probability": 0.0,
+            "total_liquidation_probability": 0.0,
+            "average_roi_survivors": 0.07027588626439837,
+            "median_roi_survivors": -0.10989191912065087,
+            "average_liquidation_events": 0
+        },
+        "0.2": {
+            "expected_roi": 0.07362855839241642,
+            "first_liquidation_probability": 0.0305,
+            "total_liquidation_probability": 0.0305,
+            "average_roi_survivors": 0.10740439235937742,
+            "median_roi_survivors": -0.11923474702999579,
+            "average_liquidation_events": 1.0
+        },
+        "0.4": {
+            "expected_roi": 0.04715496417161971,
+            "first_liquidation_probability": 0.2775,
+            "total_liquidation_probability": 0.2775,
+            "average_roi_survivors": 0.44934943137940453,
+            "median_roi_survivors": 0.11443326473687147,
+            "average_liquidation_events": 1.0
+        },
+        "0.6": {
+            "expected_roi": -0.07136189771348526,
+            "first_liquidation_probability": 0.6315,
+            "total_liquidation_probability": 0.6315,
+            "average_roi_survivors": 1.5200491242510579,
+            "median_roi_survivors": 0.9520271761620002,
+            "average_liquidation_events": 1.0
+        },
+        "0.7": {
+            "expected_roi": -0.20478030631610436,
+            "first_liquidation_probability": 0.786,
+            "total_liquidation_probability": 0.786,
+            "average_roi_survivors": 2.71597987702755,
+            "median_roi_survivors": 1.9241835008025445,
+            "average_liquidation_events": 1.0
+        },
+        "0.75": {
+            "expected_roi": -0.35798842032830086,
+            "first_liquidation_probability": 0.858,
+            "total_liquidation_probability": 0.858,
+            "average_roi_survivors": 3.5212083075471767,
+            "median_roi_survivors": 2.5451820294286165,
+            "average_liquidation_events": 1.0
+        },
+        "0.8": {
+            "expected_roi": -0.6305162354556143,
+            "first_liquidation_probability": 0.936,
+            "total_liquidation_probability": 0.936,
+            "average_roi_survivors": 4.773183821006027,
+            "median_roi_survivors": 3.2621804343988945,
+            "average_liquidation_events": 1.0
+        }
+    },
+    "Parcial": {
+        "0": {
+            "expected_roi": 0.07027588626439837,
+            "first_liquidation_probability": 0.0,
+            "total_liquidation_probability": 0.0,
+            "average_roi_survivors": 0.07027588626439837,
+            "median_roi_survivors": -0.10989191912065087,
+            "average_liquidation_events": 0
+        },
+        "0.2": {
+            "expected_roi": 0.07436946680477158,
+            "first_liquidation_probability": 0.0305,
+            "total_liquidation_probability": 0.0,
+            "average_roi_survivors": 0.07436946680477158,
+            "median_roi_survivors": -0.1501817730176755,
+            "average_liquidation_events": 3.639344262295082
+        },
+        "0.4": {
+            "expected_roi": 0.06645304708040264,
+            "first_liquidation_probability": 0.2775,
+            "total_liquidation_probability": 0.0075,
+            "average_roi_survivors": 0.07451188622710593,
+            "median_roi_survivors": -0.23207278981286014,
+            "average_liquidation_events": 5.583783783783784
+        },
+        "0.6": {
+            "expected_roi": 0.010232079045483717,
+            "first_liquidation_probability": 0.6315,
+            "total_liquidation_probability": 0.0305,
+            "average_roi_survivors": 0.04201349050591408,
+            "median_roi_survivors": -0.8168365683042356,
+            "average_liquidation_events": 7.346793349168646
+        },
+        "0.7": {
+            "expected_roi": -0.04950163904484914,
+            "first_liquidation_probability": 0.786,
+            "total_liquidation_probability": 0.0465,
+            "average_roi_survivors": -0.003148022071157982,
+            "median_roi_survivors": -0.9440301106398692,
+            "average_liquidation_events": 8.260178117048346
+        },
+        "0.75": {
+            "expected_roi": -0.1192545745754837,
+            "first_liquidation_probability": 0.858,
+            "total_liquidation_probability": 0.0395,
+            "average_roi_survivors": -0.08303443474803092,
+            "median_roi_survivors": -0.9700164184871906,
+            "average_liquidation_events": 8.706293706293707
+        },
+        "0.8": {
+            "expected_roi": -0.2523085156624539,
+            "first_liquidation_probability": 0.936,
+            "total_liquidation_probability": 0.0515,
+            "average_roi_survivors": -0.21171166648650908,
+            "median_roi_survivors": -0.9792142163548274,
+            "average_liquidation_events": 8.98344017094017
+        }
+    }
+}
